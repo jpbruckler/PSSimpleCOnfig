@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "1ME1OiK+bnKxvSkRRy6s1juolOV9csEqGfssUO9ZwZm6irVj56eiW+QD9viC39ytLKkJ8xrKPWaXQcx6Ltf8Hg==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\u55398\\Documents\\git\\PSSimpleConfig\\src\\PSSimpleConfig.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\u55398\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
+    "C:\\Users\\u55398\\.nuget\\packages\\powershellstandard.library\\7.0.0-preview.1\\powershellstandard.library.7.0.0-preview.1.nupkg.sha512"
+  ],
+  "logs": []
+}
