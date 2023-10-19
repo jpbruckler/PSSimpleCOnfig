@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\u55398\\Documents\\git\\PSSimpleConfig\\src\\PSSimpleConfig.csproj": {}
+    "D:\\PSSimpleConfig\\src\\PSSimpleConfig.csproj": {}
   },
   "projects": {
-    "C:\\Users\\u55398\\Documents\\git\\PSSimpleConfig\\src\\PSSimpleConfig.csproj": {
+    "D:\\PSSimpleConfig\\src\\PSSimpleConfig.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\u55398\\Documents\\git\\PSSimpleConfig\\src\\PSSimpleConfig.csproj",
+        "projectUniqueName": "D:\\PSSimpleConfig\\src\\PSSimpleConfig.csproj",
         "projectName": "PSSimpleConfig",
-        "projectPath": "C:\\Users\\u55398\\Documents\\git\\PSSimpleConfig\\src\\PSSimpleConfig.csproj",
-        "packagesPath": "C:\\Users\\u55398\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\u55398\\Documents\\git\\PSSimpleConfig\\src\\obj\\",
+        "projectPath": "D:\\PSSimpleConfig\\src\\PSSimpleConfig.csproj",
+        "packagesPath": "C:\\Users\\john\\.nuget\\packages\\",
+        "outputPath": "D:\\PSSimpleConfig\\src\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\u55398\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\john\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net7.0"
@@ -38,11 +38,17 @@
         "net7.0": {
           "targetAlias": "net7.0",
           "dependencies": {
+            "Microsoft.PowerShell.SDK": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[7.3.8, )"
+            },
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.3, )"
             },
             "PowerShellStandard.Library": {
+              "suppressParent": "All",
               "target": "Package",
               "version": "[7.0.0-preview.1, )"
             }

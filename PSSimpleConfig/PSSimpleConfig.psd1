@@ -12,7 +12,7 @@
 RootModule = 'PSSimpleConfig.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.8691.005'
+ModuleVersion = '0.0.8692.011'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()

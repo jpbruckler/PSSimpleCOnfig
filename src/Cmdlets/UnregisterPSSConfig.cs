@@ -1,5 +1,4 @@
 using System.Management.Automation;
-using Newtonsoft.Json.Linq;
 
 namespace PSSimpleConfig;
 
@@ -26,20 +25,24 @@ public class UnregisterPSSConfig : PSCmdlet
         WriteDebug($"ConfigRoot.Namespaces: {ConfigRoot.Namespaces}");
 
 
-        try {
-            if (Force || ShouldProcess($"Unregister-PSSConfig -Scope {Scope} -Name {Name}")) {
+        try
+        {
+            if (Force || ShouldProcess($"Unregister-PSSConfig -Scope {Scope} -Name {Name}"))
+            {
                 string projectFolder = Path.Combine(ConfigRoot.Namespaces, Name);
                 if (Directory.Exists(projectFolder))
                 {
                     WriteVerbose($"Deleting project directory: {projectFolder}");
                     Directory.Delete(projectFolder, true);
                 }
-                else {
+                else
+                {
                     WriteWarning($"Project {Name} does not exist.");
                 }
             }
         }
-        catch (Exception e) {
+        catch (Exception e)
+        {
             ErrorRecord errorRecord = new ErrorRecord(e, $"Could not delete directory structure for {Name}.", ErrorCategory.InvalidOperation, null);
             ThrowTerminatingError(errorRecord);
         }

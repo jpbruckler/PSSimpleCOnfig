@@ -12,16 +12,16 @@ $manifest = Import-PowerShellDataFile $psd1File
 $verParts = $manifest.ModuleVersion.Split('.')
 if ([string]::IsNullOrEmpty($buildData.LastBuildDate)) {
     $buildData.LastBuildDate = Get-Date -Format O
-} 
+}
 else {
-    [datetime] $lastBuild = Get-Date $buildData.LastBuildDate
-    [datetime] $today     = Get-Date -Format O
-    $buildSpan = ($today - $lastBuild).Days
+    $lastBuild  = Get-Date $buildData.LastBuildDate -Format 'yyyy-MM-dd'
+    $today      = Get-Date -Format 'yyyy-MM-dd'
+    $newDay     = $lastBuild -ne $today
 }
 $buildData.LastBuildDate = Get-Date -Format O
 $buildData | ConvertTo-Json | Out-File .\build.dat -Force
 
-if ($buildSpan -gt 0) {
+if ($newDay) {
     # It's been more than a day since the last build
     $revision = '1'.PadLeft(3, '0')
 }

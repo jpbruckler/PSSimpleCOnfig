@@ -3,7 +3,6 @@ using System.IO;
 using System.Collections;
 using System.Management.Automation;
 using Newtonsoft.Json;
-using System.Runtime.InteropServices;
 
 namespace PSSimpleConfig;
 
