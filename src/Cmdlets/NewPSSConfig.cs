@@ -1,11 +1,8 @@
-﻿using System;
-using System.IO;
-using System.Management.Automation;
-using Newtonsoft.Json.Linq;
+﻿using System.Management.Automation;
 using Newtonsoft.Json;
 using System.Collections.ObjectModel;
 
-namespace PSSimpleConfig;
+namespace PSSimpleConfig.Cmdlets;
 
 [Cmdlet(VerbsCommon.New, "PSSConfig")]
 public class RegisterPSSConfig : PSCmdlet
@@ -26,30 +23,30 @@ public class RegisterPSSConfig : PSCmdlet
 
     protected override void ProcessRecord()
     {
-        ConfigRoot.SetScope(Scope);
-        WriteDebug($"ConfigRoot.Scope: {ConfigRoot.Scope}");
-        WriteDebug($"ConfigRoot.Root: {ConfigRoot.Root}");
-        WriteDebug($"ConfigRoot.Namespaces: {ConfigRoot.Namespaces}");
+        PSSimpleConfig.SetScope(Scope);
+        WriteDebug($"PSSimpleConfig.Scope: {PSSimpleConfig.Scope}");
+        WriteDebug($"PSSimpleConfig.Root: {PSSimpleConfig.Root}");
+        WriteDebug($"PSSimpleConfig.Namespaces: {PSSimpleConfig.Namespaces}");
 
         try
         {
             // Create the root (PSSimpleConfig) directory if it doesn't exist
-            if (!Directory.Exists(ConfigRoot.Root))
+            if (!Directory.Exists(PSSimpleConfig.Root))
             {
-                WriteVerbose($"Creating PSSimpleConfig Root directory: {ConfigRoot.Root}");
-                Directory.CreateDirectory(ConfigRoot.Root);
+                WriteVerbose($"Creating PSSimpleConfig Root directory: {PSSimpleConfig.Root}");
+                Directory.CreateDirectory(PSSimpleConfig.Root);
             }
             // Create the namespaces directory if it doesn't exist
             // root/namespaces
-            if (!Directory.Exists(ConfigRoot.Namespaces))
+            if (!Directory.Exists(PSSimpleConfig.Namespaces))
             {
-                WriteVerbose($"Creating namespaces directory: {ConfigRoot.Namespaces}");
-                Directory.CreateDirectory(ConfigRoot.Namespaces);
+                WriteVerbose($"Creating namespaces directory: {PSSimpleConfig.Namespaces}");
+                Directory.CreateDirectory(PSSimpleConfig.Namespaces);
             }
             // Create the project directory if it doesn't exist
             if (!string.IsNullOrEmpty(Name))
             {
-                string projectFolder = Path.Combine(ConfigRoot.Namespaces, Name);   // root/namespaces/project
+                string projectFolder = Path.Combine(PSSimpleConfig.Namespaces, Name);   // root/namespaces/project
                 bool _createProject = false;                                        // Flag to determine if we need to create the project directory
                 if (!Directory.Exists(projectFolder))
                 {

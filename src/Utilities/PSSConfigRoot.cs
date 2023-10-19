@@ -1,17 +1,15 @@
-using System.Globalization;
-using System;
-using System.IO;
 
 namespace PSSimpleConfig;
 
-public static class ConfigRoot
+public static class PSSimpleConfig
 {
     public static string Scope { get; private set; } = "User";
     public static string Root { get; private set; }
 
     public static string Namespaces { get { return Path.Combine(Root, "namespaces"); }}
-    static ConfigRoot()
+    static PSSimpleConfig()
     {
+        Root = "";
         UpdateRoot();
     }
     public static void SetScope(string configScope)

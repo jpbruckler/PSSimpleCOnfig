@@ -1,17 +1,17 @@
-using System;
-using System.IO;
+using System.Collections;
 using System.Management.Automation;
-
 using Newtonsoft.Json.Linq;
 
-namespace PSSimpleConfig;
+using PSSimpleConfig.Utilities;
+
+namespace PSSimpleConfig.Cmdlets;
 
 [Cmdlet(VerbsCommon.Get, "PSSConfig", DefaultParameterSetName = "List")]
 public class GetPSSConfig : PSCmdlet
 {
     [Parameter(Mandatory = true, Position = 0, ParameterSetName = "Get")]
     [Alias("Path")]
-    public string ConfigPath { get; set; }
+    public string? ConfigPath { get; set; }
 
     [Parameter(Mandatory = false, Position = 1, ParameterSetName = "Get")]
     [Alias("Project")]
@@ -27,25 +27,25 @@ public class GetPSSConfig : PSCmdlet
     protected override void BeginProcessing()
     {
         base.BeginProcessing();
-        ConfigRoot.SetScope(Scope);
+        PSSimpleConfig.SetScope(Scope);
     }
     protected override void ProcessRecord()
     {
         if (this.ParameterSetName == "List")
         {
-            string[] dirs = Directory.GetDirectories(ConfigRoot.Namespaces);
+            string[] dirs = Directory.GetDirectories(PSSimpleConfig.Namespaces);
             foreach (string dir in dirs)
             {
                 PSObject psObject = new PSObject();
-                psObject.Properties.Add(new PSNoteProperty("Scope", ConfigRoot.Scope));
-                psObject.Properties.Add(new PSNoteProperty("ProjectName", dir.Replace(ConfigRoot.Namespaces, "").TrimStart('\\')));
+                psObject.Properties.Add(new PSNoteProperty("Scope", PSSimpleConfig.Scope));
+                psObject.Properties.Add(new PSNoteProperty("ProjectName", dir.Replace(PSSimpleConfig.Namespaces, "").TrimStart('\\')));
                 psObject.Properties.Add(new PSNoteProperty("ConfigPath", Path.Combine(dir, "config.json")));
                 WriteObject(psObject);
             }
         }
         else
         {
-            string configFilePath = Path.Combine(ConfigRoot.Namespaces, Name, "config.json");
+            string configFilePath = Path.Combine(PSSimpleConfig.Namespaces, Name, "config.json");
             if (File.Exists(configFilePath))
             {
                 string jsonContent = File.ReadAllText(configFilePath);
@@ -54,7 +54,8 @@ public class GetPSSConfig : PSCmdlet
 
                 // Use LINQ to select the desired value
                 JToken jToken = jObject.SelectToken(ConfigPath);
-                WriteObject(jToken?.ToObject<object>());
+                object result = ConvertJToken.ConvertJTokenToPSObject(jToken);
+                WriteObject(result);
             }
             else
             {

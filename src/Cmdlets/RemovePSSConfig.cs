@@ -2,7 +2,7 @@ using System.Management.Automation;
 
 namespace PSSimpleConfig;
 
-[Cmdlet(VerbsLifecycle.Unregister, "PSSConfig", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+[Cmdlet(VerbsCommon.Remove, "PSSConfig", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
 public class UnregisterPSSConfig : PSCmdlet
 {
     [Parameter(Mandatory = false, Position = 0)]
@@ -19,17 +19,17 @@ public class UnregisterPSSConfig : PSCmdlet
 
     protected override void ProcessRecord()
     {
-        ConfigRoot.SetScope(Scope);
-        WriteDebug($"ConfigRoot.Scope: {ConfigRoot.Scope}");
-        WriteDebug($"ConfigRoot.Root: {ConfigRoot.Root}");
-        WriteDebug($"ConfigRoot.Namespaces: {ConfigRoot.Namespaces}");
+        PSSimpleConfig.SetScope(Scope);
+        WriteDebug($"PSSimpleConfig.Scope: {PSSimpleConfig.Scope}");
+        WriteDebug($"PSSimpleConfig.Root: {PSSimpleConfig.Root}");
+        WriteDebug($"PSSimpleConfig.Namespaces: {PSSimpleConfig.Namespaces}");
 
 
         try
         {
             if (Force || ShouldProcess($"Unregister-PSSConfig -Scope {Scope} -Name {Name}"))
             {
-                string projectFolder = Path.Combine(ConfigRoot.Namespaces, Name);
+                string projectFolder = Path.Combine(PSSimpleConfig.Namespaces, Name);
                 if (Directory.Exists(projectFolder))
                 {
                     WriteVerbose($"Deleting project directory: {projectFolder}");

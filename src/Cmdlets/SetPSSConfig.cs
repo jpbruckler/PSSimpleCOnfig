@@ -1,10 +1,8 @@
-using System;
-using System.IO;
 using System.Collections;
 using System.Management.Automation;
 using Newtonsoft.Json;
 
-namespace PSSimpleConfig;
+namespace PSSimpleConfig.Cmdlets;
 
 [Cmdlet(VerbsCommon.Set, "PSSConfig")]
 public class SetPSSConfig : PSCmdlet
@@ -34,7 +32,7 @@ public class SetPSSConfig : PSCmdlet
 
         // TODO: Handle errors and edge cases
 
-        string configFilePath = Path.Combine(ConfigRoot.Namespaces, Name, "config.json");
+        string configFilePath = Path.Combine(PSSimpleConfig.Namespaces, Name, "config.json");
 
         // Serialize the hashtable to a JSON string
         string json = JsonConvert.SerializeObject(Hashtable);
