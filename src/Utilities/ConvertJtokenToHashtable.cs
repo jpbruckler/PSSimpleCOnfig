@@ -1,6 +1,5 @@
 using Newtonsoft.Json.Linq;
 using System.Collections;
-using System.Management.Automation;
 
 namespace PSSimpleConfig.Utilities;
 
