@@ -18,8 +18,6 @@ else {
     $today      = Get-Date -Format 'yyyy-MM-dd'
     $newDay     = $lastBuild -ne $today
 }
-$buildData.LastBuildDate = Get-Date -Format O
-$buildData | ConvertTo-Json | Out-File .\build.dat -Force
 
 if ($newDay) {
     # It's been more than a day since the last build
@@ -31,6 +29,9 @@ else {
 $newBuild = ((get-Date) - (get-date '1/1/2000')).Days
 $newVersion = ("{0}.{1}.{2}.{3}" -f $verParts[0], $verParts[1], $newBuild, $revision)
 
+$buildData.LastBuildDate = Get-Date -Format O
+$buildData.LastVersion = $newVersion
+$buildData | ConvertTo-Json | Out-File .\build.dat -Force
 
 $build = & dotnet build $PSScriptRoot\src -o $PSScriptRoot\Output\$moduleName\bin
 if ($build -match 'Build succeeded') {

@@ -26,10 +26,19 @@ public static class PSSimpleConfig
     }
     private static void UpdateRoot()
     {
-        string rootFolder = Environment.GetFolderPath(
-            Scope == "User" ? Environment.SpecialFolder.LocalApplicationData : Environment.SpecialFolder.CommonApplicationData
-        );
-        Root = Path.Combine(rootFolder, "PSSimpleConfig");
+        // Allow a user to override the default root folder with environment variable
+        if (Environment.GetEnvironmentVariable("PSSC_ROOT") != null)
+        {
+            Root = Environment.GetEnvironmentVariable("PSSC_ROOT");
+            return;
+        }
+        else if (Environment.GetEnvironmentVariable("PSSC_ROOT") == null && Root != "")
+        {
+            string rootFolder = Environment.GetFolderPath(
+                Scope == "User" ? Environment.SpecialFolder.LocalApplicationData : Environment.SpecialFolder.CommonApplicationData
+            );
+            Root = Path.Combine(rootFolder, "PSSimpleConfig");
+        }
     }
 }
 

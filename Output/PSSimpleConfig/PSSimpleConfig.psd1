@@ -12,7 +12,7 @@
 RootModule = 'PSSimpleConfig.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.8692.014'
+ModuleVersion = '0.0.8692.017'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -24,16 +24,16 @@ GUID = 'ab5d284c-7e80-48de-9a0c-58fc81c970b5'
 Author = 'John Bruckler'
 
 # Company or vendor of this module
-CompanyName = 'Unknown'
+CompanyName = 'John Bruckler'
 
 # Copyright statement for this module
 Copyright = '(c) John Bruckler. All rights reserved.'
 
 # Description of the functionality provided by this module
-# Description = ''
+Description = 'PSSimpleConfig provides a simple way to get, set, and manage configuration data using a JSON backend. Configuration data is set and returned by providing a dot notation path (my.config.item, or my.config.item = "value" to set).'
 
 # Minimum version of the PowerShell engine required by this module
-# PowerShellVersion = ''
+PowerShellVersion = '7.3'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
@@ -69,16 +69,21 @@ Copyright = '(c) John Bruckler. All rights reserved.'
 NestedModules = @('bin\PSSimpleConfig.dll')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Register-PSSConfig'
+FunctionsToExport = @()
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = '*'
+CmdletsToExport = @(
+    'New-PSSConfig',
+    'Remove-PSSConfig',
+    'Get-PSSConfig',
+    'Set-PSSConfig'
+)
 
 # Variables to export from this module
-VariablesToExport = '*'
+#VariablesToExport = '*'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = '*'
+#AliasesToExport = '*'
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()
@@ -95,13 +100,13 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+        Tags = @('Config', 'Configuration')
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        LicenseUri = 'https://choosealicense.com/licenses/mit/'
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+        ProjectUri = 'https://github.com/jpbruckler/PSSimpleConfig'
 
         # A URL to an icon representing this module.
         # IconUri = ''
