@@ -12,7 +12,7 @@
 RootModule = 'PSSimpleConfig.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.8692.017'
+ModuleVersion = '0.0.8693.028'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -69,7 +69,9 @@ PowerShellVersion = '7.3'
 NestedModules = @('bin\PSSimpleConfig.dll')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @()
+FunctionsToExport = @(
+    'Get-PSSCSessionVariable'
+)
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @(

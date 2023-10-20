@@ -3,7 +3,7 @@ using System.Management.Automation;
 namespace PSSimpleConfig;
 
 [Cmdlet(VerbsCommon.Remove, "PSSConfig", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
-public class UnregisterPSSConfig : PSCmdlet
+public class RemovePSSConfig : PSCmdlet
 {
     [Parameter(Mandatory = false, Position = 0)]
     [ValidateSet("User", "Machine")]
@@ -22,14 +22,14 @@ public class UnregisterPSSConfig : PSCmdlet
         PSSimpleConfig.SetScope(Scope);
         WriteDebug($"PSSimpleConfig.Scope: {PSSimpleConfig.Scope}");
         WriteDebug($"PSSimpleConfig.Root: {PSSimpleConfig.Root}");
-        WriteDebug($"PSSimpleConfig.Namespaces: {PSSimpleConfig.Namespaces}");
+        WriteDebug($"PSSimpleConfig.ProjectRoot: {PSSimpleConfig.ProjectRoot}");
 
 
         try
         {
-            if (Force || ShouldProcess($"Unregister-PSSConfig -Scope {Scope} -Name {Name}"))
+            if (Force || ShouldProcess($"Remove-PSSConfig -Scope {Scope} -Name {Name}"))
             {
-                string projectFolder = Path.Combine(PSSimpleConfig.Namespaces, Name);
+                string projectFolder = Path.Combine(PSSimpleConfig.ProjectRoot, Name);
                 if (Directory.Exists(projectFolder))
                 {
                     WriteVerbose($"Deleting project directory: {projectFolder}");

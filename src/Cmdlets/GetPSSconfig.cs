@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Management.Automation;
 using Newtonsoft.Json.Linq;
 
@@ -9,9 +8,8 @@ namespace PSSimpleConfig.Cmdlets;
 [Cmdlet(VerbsCommon.Get, "PSSConfig", DefaultParameterSetName = "List")]
 public class GetPSSConfig : PSCmdlet
 {
-    [Parameter(Mandatory = true, Position = 0, ParameterSetName = "Get")]
-    [Alias("Path")]
-    public string? ConfigPath { get; set; }
+    [Parameter(Mandatory = false, Position = 0, ParameterSetName = "Get")]
+    public string? Path { get; set; }
 
     [Parameter(Mandatory = false, Position = 1, ParameterSetName = "Get")]
     [Alias("Project")]
@@ -33,29 +31,37 @@ public class GetPSSConfig : PSCmdlet
     {
         if (this.ParameterSetName == "List")
         {
-            string[] dirs = Directory.GetDirectories(PSSimpleConfig.Namespaces);
+            string[] dirs = Directory.GetDirectories(PSSimpleConfig.ProjectRoot);
             foreach (string dir in dirs)
             {
                 PSObject psObject = new PSObject();
                 psObject.Properties.Add(new PSNoteProperty("Scope", PSSimpleConfig.Scope));
-                psObject.Properties.Add(new PSNoteProperty("ProjectName", dir.Replace(PSSimpleConfig.Namespaces, "").TrimStart('\\')));
-                psObject.Properties.Add(new PSNoteProperty("ConfigPath", Path.Combine(dir, "config.json")));
+                psObject.Properties.Add(new PSNoteProperty("ProjectName", dir.Replace(PSSimpleConfig.ProjectRoot, "").TrimStart('\\')));
+                psObject.Properties.Add(new PSNoteProperty("ConfigPath", System.IO.Path.Combine(dir, "config.json")));
                 WriteObject(psObject);
             }
         }
         else
         {
-            string configFilePath = Path.Combine(PSSimpleConfig.Namespaces, Name, "config.json");
+            string configFilePath = System.IO.Path.Combine(PSSimpleConfig.ProjectRoot, Name, "config.json");
             if (File.Exists(configFilePath))
             {
                 string jsonContent = File.ReadAllText(configFilePath);
                 // Parse the JSON content into a JObject
                 JObject jObject = JObject.Parse(jsonContent);
 
-                // Use LINQ to select the desired value
-                JToken jToken = jObject.SelectToken(ConfigPath);
-                object result = ConvertJToken.ConvertJTokenToPSObject(jToken);
-                WriteObject(result);
+                if (Path == null)
+                {
+                    var _output = JsonConversion.ToPSObject(jObject);
+                    WriteObject(_output);
+                }
+                else {
+                    // Use LINQ to select the desired value
+                    JToken jToken = jObject.SelectToken(Path);
+                    object result = JsonConversion.ToPSOutput(jToken);
+                    WriteObject(result);
+                }
+
             }
             else
             {

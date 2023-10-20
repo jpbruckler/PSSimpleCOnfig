@@ -6,11 +6,14 @@ public static class PSSimpleConfig
     public static string Scope { get; private set; } = "User";
     public static string Root { get; private set; }
 
-    public static string Namespaces { get { return Path.Combine(Root, "namespaces"); }}
+    public static string ProjectRoot { get { return Path.Combine(Root, "projects"); }}
     static PSSimpleConfig()
     {
-        Root = "";
         UpdateRoot();
+
+        if (Root == null) {
+            Root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        }
     }
     public static void SetScope(string configScope)
     {

@@ -1,11 +1,14 @@
-﻿using System.Management.Automation;
-using Newtonsoft.Json;
+﻿using System;
+using System.IO;
+using System.Diagnostics;
+using System.Management.Automation;
 using System.Collections.ObjectModel;
+using Newtonsoft.Json;
 
 namespace PSSimpleConfig.Cmdlets;
 
-[Cmdlet(VerbsCommon.New, "PSSConfig")]
-public class RegisterPSSConfig : PSCmdlet
+[Cmdlet(VerbsCommon.New, "PSSConfig", SupportsShouldProcess = false, ConfirmImpact = ConfirmImpact.None)]
+public class NewPSSConfig : PSCmdlet
 {
     [Parameter(Mandatory = false, Position = 1)]
     [Alias("Project")]
@@ -26,28 +29,36 @@ public class RegisterPSSConfig : PSCmdlet
         PSSimpleConfig.SetScope(Scope);
         WriteDebug($"PSSimpleConfig.Scope: {PSSimpleConfig.Scope}");
         WriteDebug($"PSSimpleConfig.Root: {PSSimpleConfig.Root}");
-        WriteDebug($"PSSimpleConfig.Namespaces: {PSSimpleConfig.Namespaces}");
+        WriteDebug($"PSSimpleConfig.ProjectRoot: {PSSimpleConfig.ProjectRoot}");
+
+
+        PSVariableIntrinsics _sessionState = SessionState.PSVariable;
+        // Create a PowerShell instance for retrieving module information
+        using PowerShell ps = PowerShell.Create();
 
         try
         {
             // Create the root (PSSimpleConfig) directory if it doesn't exist
             if (!Directory.Exists(PSSimpleConfig.Root))
             {
+                WriteDebug($"PSSimpleConfig root directory not found. Creating directory: {PSSimpleConfig.Root}");
                 WriteVerbose($"Creating PSSimpleConfig Root directory: {PSSimpleConfig.Root}");
                 Directory.CreateDirectory(PSSimpleConfig.Root);
             }
-            // Create the namespaces directory if it doesn't exist
-            // root/namespaces
-            if (!Directory.Exists(PSSimpleConfig.Namespaces))
+            // Create the projects directory if it doesn't exist
+            // root/projects
+            if (!Directory.Exists(PSSimpleConfig.ProjectRoot))
             {
-                WriteVerbose($"Creating namespaces directory: {PSSimpleConfig.Namespaces}");
-                Directory.CreateDirectory(PSSimpleConfig.Namespaces);
+                WriteDebug($"PSSimpleConfig projects directory not found. Creating directory: {PSSimpleConfig.ProjectRoot}");
+                WriteVerbose($"Creating project directory: {PSSimpleConfig.ProjectRoot}");
+                Directory.CreateDirectory(PSSimpleConfig.ProjectRoot);
             }
             // Create the project directory if it doesn't exist
+            // root/projects/{Name}
             if (!string.IsNullOrEmpty(Name))
             {
-                string projectFolder = Path.Combine(PSSimpleConfig.Namespaces, Name);   // root/namespaces/project
-                bool _createProject = false;                                        // Flag to determine if we need to create the project directory
+                string projectFolder = Path.Combine(PSSimpleConfig.ProjectRoot, Name);
+                bool _createProject = false;
                 if (!Directory.Exists(projectFolder))
                 {
                     _createProject = true;
@@ -60,6 +71,7 @@ public class RegisterPSSConfig : PSCmdlet
                     }
                     else
                     {
+                        WriteDebug($"Project {Name} exists and -Force is set. Deleting existing project directory: {projectFolder}");
                         WriteVerbose($"Deleting existing project directory: {projectFolder}");
                         Directory.Delete(projectFolder, true);
                         _createProject = true;
@@ -70,39 +82,39 @@ public class RegisterPSSConfig : PSCmdlet
                     WriteVerbose($"Creating project directory: {projectFolder}");
                     Directory.CreateDirectory(projectFolder);
 
-                    // Create a sample config.json file.
-                    // if (FromPSModule) is true, then we'll create a sample
-                    // config.json file from the module named in the Name parameter.
-                    // Otherwise, we'll create a sample config.json file scratch.
-                    PSObject configObject = new PSObject();
 
-                    configObject.Properties.Add(new PSNoteProperty("Name", Name));
-                    configObject.Properties.Add(new PSNoteProperty("ConfigScope", Scope));
+                    PSModuleInfo _PSSCMod = this.MyInvocation.MyCommand.Module;
+
+                    // Create a Dictionary to hold the initial config.json values.
+                    Dictionary<string, object> _configDict = new Dictionary<string, object>();
+                    Dictionary<string, object> _psscInfo = new Dictionary<string, object>();
+
+                    // Add the PSSimpleConfig module information to the _psscInfo Dictionary
+                    _psscInfo.Add("Version", _PSSCMod.Version.ToString());
+                    _psscInfo.Add("ProjectName", Name);
+                    _psscInfo.Add("ConfigScope", Scope);
+                    _configDict.Add("PSSC", _psscInfo);
 
                     // Use Get-Module to retrive some basic information about
                     // the module and add it to the configObject.
                     if (FromPSModule)
                     {
-                        using PowerShell ps = PowerShell.Create();
                         ps.AddCommand("Get-Module").AddParameter("Name", Name).AddParameter("ListAvailable");
                         Collection<PSObject> module = ps.Invoke();
 
-                        configObject.Properties.Add(new PSNoteProperty("Version", module[0].Properties["Version"].Value.ToString()));
-                        configObject.Properties.Add(new PSNoteProperty("ModuleRoot", module[0].Properties["ModuleBase"].Value));
-                    }
-
-                    // Convert PSObject to Dictionary
-                    Dictionary<string, object> dictionary = new Dictionary<string, object>();
-                    foreach (var property in configObject.Properties)
-                    {
-                        dictionary.Add(property.Name, property.Value);
+                        _configDict.Add("Version", module[0].Properties["Version"].Value.ToString());
+                        _configDict.Add("ModuleRoot", module[0].Properties["ModuleBase"].Value);
                     }
 
                     // Serialize Dictionary to JSON
-                    string configJson = JsonConvert.SerializeObject(dictionary, Formatting.Indented);
+                    string configJson = JsonConvert.SerializeObject(_configDict, Formatting.Indented);
 
                     File.WriteAllText(Path.Combine(projectFolder, "config.json"), configJson.ToString());
-                    WriteObject(configObject);
+                    //WriteObject(_configDict);
+
+                    _sessionState.Set("script:PSSimpleConfig", _configDict);
+                    object output = _sessionState.Get("script:PSSimpleConfig");
+                    WriteObject(output);
                 }
             }
         }
