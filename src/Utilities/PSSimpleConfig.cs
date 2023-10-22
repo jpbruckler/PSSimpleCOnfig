@@ -1,87 +1,95 @@
-using System.IO;
 using System.Management.Automation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace PSSimpleConfig;
 
-public static class PSSimpleConfig
+namespace PSSimpleConfig.Utilities;
+public sealed class PSSC
 {
-    public static string Scope { get; private set; } = "User";
-    public static string Root { get; private set; }
-
-    public static string ProjectRoot { get { return Path.Combine(Root, "projects"); }}
-    static PSSimpleConfig()
+    private static readonly object Lock = new object();
+    private static PSSC? s_instance = null;
+    public Dictionary<Guid, Project> Projects { get; private set; } = new Dictionary<Guid, Project>();
+    public Dictionary<string, object> ModuleData { get; private set; } = new Dictionary<string, object>();
+    private PSSC()
     {
-        UpdateRoot();
-
-        if (Root == null) {
-            Root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        }
+        // Initialize the Projects Dictionary
+        //Projects = new Dictionary<Guid, Project>();
+        //ModuleData = new Dictionary<string, object>();
     }
-    public static void SetScope(string configScope)
+
+    public static PSSC Instance
     {
-        if (configScope == "User" || configScope == "Machine")
+        get
         {
-            Scope = configScope;
-            UpdateRoot();
-        }
-        else
-        {
-            throw new ArgumentException("Scope must be either 'User' or 'Machine'.");
-        }
-    }
-    private static void UpdateRoot()
-    {
-        // Allow a user to override the default root folder with environment variable
-        if (Environment.GetEnvironmentVariable("PSSC_ROOT") != null)
-        {
-            Root = Environment.GetEnvironmentVariable("PSSC_ROOT");
-            return;
-        }
-        else if (Environment.GetEnvironmentVariable("PSSC_ROOT") == null)
-        {
-            string rootFolder = Environment.GetFolderPath(
-                Scope == "User" ? Environment.SpecialFolder.LocalApplicationData : Environment.SpecialFolder.CommonApplicationData
-            );
-            Root = Path.Combine(rootFolder, "PSSimpleConfig");
+            lock (Lock)
+            {
+                s_instance ??= new PSSC();
+                return s_instance;
+            }
         }
     }
 
-    public static FileInfo GetConfigFilePath(string projectName)
+    public Project GetProjectByName(string name)
     {
-        return new FileInfo(Path.Combine(ProjectRoot, projectName, "config.json"));
+        return Projects.Values.FirstOrDefault(p => p.Name == name);
     }
 
-    public static JObject ImportConfig(string projectName)
+    public static void InitializeModule(PSCmdlet instance)
     {
-        FileInfo configFile = GetConfigFilePath(projectName);
-        if (!configFile.Exists)
-        {
-            throw new FileNotFoundException($"Could not find config file for project {projectName}. Expected file path: {configFile.FullName}");
+        /// <summary>
+        /// The root path for the PSSimpleConfig module conifguration file. Defaults
+        /// to the directory containing the module, but if that can't be determined
+        /// it will default to the CommonApplicationData ($env:ProgramData) folder.
+        /// </summary>
+        string _moduleCfgRoot = string.Empty;
+
+        /// <summary>
+        /// The full path to the PSSimpleConfig module configuration file.
+        /// </summary>
+        string _moduleCfgFile = string.Empty;
+
+        /// <summary>
+        /// The root path for the PSSimpleConfig project configuration files. Defaults
+        /// to the CommonApplicationData ($env:ProgramData) folder.
+        /// </summary>
+        string _projectCfgRoot = string.Empty;
+
+        /// <summary>
+        /// 1. Check that the default config path exists. Create if it doesn't.
+        /// 2. Check that the default config file exists. Create if it doesn't.
+        /// 3. Check for project name collision, throw if there is a name collision.
+        /// </summary>
+        if (string.IsNullOrEmpty(_moduleCfgRoot)) {
+            _moduleCfgRoot = Path.GetDirectoryName(instance.MyInvocation?.MyCommand?.Module?.Path)
+                                ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PSSimpleConfig");
+        }
+        if (string.IsNullOrEmpty(_moduleCfgFile)) {
+            _moduleCfgFile = Path.Combine(_moduleCfgRoot, "PSSimpleConfig.json");
+        }
+        if (string.IsNullOrEmpty(_projectCfgRoot)) {
+            _projectCfgRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PSSimpleConfig", "Projects");
         }
 
-        try {
-            return JObject.Parse(File.ReadAllText(configFile.FullName));
+        if (Directory.Exists(_projectCfgRoot)) {
+            Directory.CreateDirectory(_projectCfgRoot);
         }
-        catch (IOException e) {
-            throw new IOException($"Could not read config file for project {projectName}. Expected file path: {configFile.FullName}. Error: {e.Message}");
-        }
-        catch (Exception e) {
-            throw new Exception($"Could not read config file for project {projectName}. Error: {e.Message}");
-        }
-    }
 
-    public static void ExportConfig(string projectName, JObject config)
-    {
-        FileInfo configFile = GetConfigFilePath(projectName);
-
-        try {
-            File.WriteAllText(configFile.FullName, config.ToString(Formatting.Indented));
+        if (!File.Exists(_moduleCfgFile)) {
+            var moduleCfg = new JObject
+            {
+                { "PSSCCfgRoot", _moduleCfgRoot },
+                { "PSSCfgFile", _moduleCfgFile },
+                { "ProjectRoot", _projectCfgRoot }
+            };
+            File.WriteAllText(_moduleCfgFile, moduleCfg.ToString(Formatting.Indented));
         }
-        catch {
-            throw new IOException($"Could not write to config file for project {projectName}. Expected file path: {configFile.FullName}");
+
+        if (Instance.ModuleData.Count > 0) {
+            Instance.ModuleData.Clear();
+        }
+        var moduleData = JObject.Parse(File.ReadAllText(_moduleCfgFile));
+        foreach (var kvp in moduleData) {
+            Instance.ModuleData.Add(kvp.Key, kvp.Value == null ? string.Empty : kvp.Value.ToString());
         }
     }
 }
-

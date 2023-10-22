@@ -1,18 +1,15 @@
-﻿using System;
-using System.IO;
-using System.Diagnostics;
-using System.Management.Automation;
-using System.Management.Automation.Runspaces;
-using System.Collections.ObjectModel;
+﻿using System.Management.Automation;
 using Newtonsoft.Json;
-using System.ServiceModel.Security.Tokens;
+using Newtonsoft.Json.Linq;
+using PSSimpleConfig.Utilities;
 
 namespace PSSimpleConfig.Cmdlets;
 
 [Cmdlet(VerbsCommon.New, "PSSConfig", SupportsShouldProcess = false, ConfirmImpact = ConfirmImpact.None)]
 public class NewPSSConfig : PSCmdlet
 {
-    [Parameter(Mandatory = false, Position = 1)]
+    [Parameter(Mandatory = true, Position = 1)]
+    [ValidateNotNullOrEmpty()]
     [Alias("Project")]
     public string? Name { get; set; }
 
@@ -24,109 +21,44 @@ public class NewPSSConfig : PSCmdlet
     public SwitchParameter Force { get; set; }
 
     [Parameter(Mandatory = false)]
+    public System.IO.DirectoryInfo? Path { get; set; }
+
+    [Parameter(Mandatory = false)]
     public SwitchParameter FromPSModule { get; set; }
 
     protected override void BeginProcessing()
     {
-
+        PSSC.InitializeModule(this);
     }
     protected override void ProcessRecord()
     {
-        PSSimpleConfig.SetScope(Scope);
-        WriteDebug($"PSSimpleConfig.Scope: {PSSimpleConfig.Scope}");
-        WriteDebug($"PSSimpleConfig.Root: {PSSimpleConfig.Root}");
-        WriteDebug($"PSSimpleConfig.ProjectRoot: {PSSimpleConfig.ProjectRoot}");
+        WriteDebug($"PSSCCfgRoot: {PSSC.Instance.ModuleData["PSSCCfgRoot"]}");
+        WriteDebug($"PSSCCfgFile: {PSSC.Instance.ModuleData["PSSCCfgFile"]}");
+        WriteDebug($"ProjectRoot: {PSSC.Instance.ModuleData["ProjectRoot"]}");
 
-        // Create a PowerShell instance for retrieving module information
-        using PowerShell ps = PowerShell.Create();
+        // Need to check if there's already a project with the same name.
 
-        try
+        Guid projectGuid = Guid.NewGuid();
+
+        bool v = Path == null;
+        #pragma warning disable CS8618 // Nullability warning. We're checking nulls above.
+        string projectPath = v ? System.IO.Path.Combine(PSSC.Instance.ModuleData["ProjectRoot"].ToString(), Name) : Path.FullName;
+        #pragma warning restore CS8618 // Nullability warning.
+
+        // Check if the project directory exists. If it does, check if we're forcing overwrite.
+        if (System.IO.Directory.Exists(projectPath))
         {
-            // Create the root (PSSimpleConfig) directory if it doesn't exist
-            if (!Directory.Exists(PSSimpleConfig.Root))
+            if (Force)
             {
-                WriteDebug($"PSSimpleConfig root directory not found. Creating directory: {PSSimpleConfig.Root}");
-                WriteVerbose($"Creating PSSimpleConfig Root directory: {PSSimpleConfig.Root}");
-                Directory.CreateDirectory(PSSimpleConfig.Root);
+                WriteWarning($"Project directory {projectPath} already exists. Forcing overwrite.");
+                System.IO.Directory.Delete(projectPath, true);
+                System.IO.Directory.CreateDirectory(projectPath);
             }
-            // Create the projects directory if it doesn't exist
-            // root/projects
-            if (!Directory.Exists(PSSimpleConfig.ProjectRoot))
+            else
             {
-                WriteDebug($"PSSimpleConfig projects directory not found. Creating directory: {PSSimpleConfig.ProjectRoot}");
-                WriteVerbose($"Creating project directory: {PSSimpleConfig.ProjectRoot}");
-                Directory.CreateDirectory(PSSimpleConfig.ProjectRoot);
+                WriteError(new ErrorRecord(new System.IO.IOException($"Project directory {projectPath} already exists. Use -Force to overwrite."), "ProjectExists", ErrorCategory.ResourceExists, projectPath));
+                return;
             }
-            // Create the project directory if it doesn't exist
-            // root/projects/{Name}
-            if (!string.IsNullOrEmpty(Name))
-            {
-                string projectFolder = Path.Combine(PSSimpleConfig.ProjectRoot, Name);
-                bool _createProject = false;
-                if (!Directory.Exists(projectFolder))
-                {
-                    _createProject = true;
-                }
-                else
-                {
-                    if (Force == false)
-                    {
-                        WriteWarning($"Project {Name} already exists. Use -Force to overwrite.");
-                    }
-                    else
-                    {
-                        WriteDebug($"Project {Name} exists and -Force is set. Deleting existing project directory: {projectFolder}");
-                        WriteVerbose($"Deleting existing project directory: {projectFolder}");
-                        Directory.Delete(projectFolder, true);
-                        _createProject = true;
-                    }
-                }
-                if (_createProject)
-                {
-                    WriteVerbose($"Creating project directory: {projectFolder}");
-                    Directory.CreateDirectory(projectFolder);
-
-                    PSModuleInfo _PSSCMod = this.MyInvocation.MyCommand.Module;
-
-                    // Create a Dictionary to hold the initial config.json values.
-                    Dictionary<string, object> _configDict = new Dictionary<string, object>();
-                    Dictionary<string, object> _psscInfo = new Dictionary<string, object>
-                    {
-                        // Add the PSSimpleConfig module information to the _psscInfo Dictionary
-                        { "Version", _PSSCMod.Version.ToString() },
-                        { "ProjectName", Name },
-                        { "ConfigScope", Scope }
-                    };
-                    _configDict.Add("PSSC", _psscInfo);
-
-                    // Use Get-Module to retrive some basic information about
-                    // the module and add it to the configObject.
-                    if (FromPSModule)
-                    {
-                        ps.AddCommand("Get-Module").AddParameter("Name", Name).AddParameter("ListAvailable");
-                        Collection<PSObject> module = ps.Invoke();
-
-                        _configDict.Add("Version", module[0].Properties["Version"].Value.ToString());
-                        _configDict.Add("ModuleRoot", module[0].Properties["ModuleBase"].Value);
-                    }
-
-                    // Serialize Dictionary to JSON
-                    string configJson = JsonConvert.SerializeObject(_configDict, Formatting.Indented);
-
-                    File.WriteAllText(Path.Combine(projectFolder, "config.json"), configJson.ToString());
-                    //WriteObject(_configDict);
-                            PSVariableIntrinsics _sessionState = SessionState.PSVariable;
-                    ps.AddCommand("Set-Variable").AddParameter("Name", "PSSC").AddParameter("Scope", "Script").AddParameter("Value", _configDict);
-                    ps.Invoke();
-                    WriteObject(_configDict);
-
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            ErrorRecord errorRecord = new(e, $"Could not create directory structure for {Name}.", ErrorCategory.InvalidOperation, null);
-            ThrowTerminatingError(errorRecord);
         }
     }
 }

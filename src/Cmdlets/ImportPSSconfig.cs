@@ -6,17 +6,8 @@ using PSSimpleConfig.Utilities;
 
 namespace PSSimpleConfig.Cmdlets;
 
-[Cmdlet(VerbsData.Import, "PSSConfig")]
-public class ImportPSSConfig : PSCmdlet
+[Cmdlet(VerbsData.Import, "PSSConfig", SupportsShouldProcess = false, ConfirmImpact = ConfirmImpact.None)]
+public class ImportPSSConfig
 {
-    [Parameter(Mandatory = true)]
-    [Alias("Project")]
-    public string Name { get; set; }
 
-    protected override void ProcessRecord()
-    {
-        JObject config = PSSimpleConfig.ImportConfig(Name);
-        SessionState.PSVariable.Set("PSSimpleConfig", JsonConversion.ToPSOutput(config));
-        WriteObject(SessionState.PSVariable.Get("PSSimpleConfig"));
-    }
 }
