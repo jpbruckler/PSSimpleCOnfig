@@ -2,8 +2,10 @@
 using System.IO;
 using System.Diagnostics;
 using System.Management.Automation;
+using System.Management.Automation.Runspaces;
 using System.Collections.ObjectModel;
 using Newtonsoft.Json;
+using System.ServiceModel.Security.Tokens;
 
 namespace PSSimpleConfig.Cmdlets;
 
@@ -24,6 +26,10 @@ public class NewPSSConfig : PSCmdlet
     [Parameter(Mandatory = false)]
     public SwitchParameter FromPSModule { get; set; }
 
+    protected override void BeginProcessing()
+    {
+
+    }
     protected override void ProcessRecord()
     {
         PSSimpleConfig.SetScope(Scope);
@@ -31,8 +37,6 @@ public class NewPSSConfig : PSCmdlet
         WriteDebug($"PSSimpleConfig.Root: {PSSimpleConfig.Root}");
         WriteDebug($"PSSimpleConfig.ProjectRoot: {PSSimpleConfig.ProjectRoot}");
 
-
-        PSVariableIntrinsics _sessionState = SessionState.PSVariable;
         // Create a PowerShell instance for retrieving module information
         using PowerShell ps = PowerShell.Create();
 
@@ -82,17 +86,17 @@ public class NewPSSConfig : PSCmdlet
                     WriteVerbose($"Creating project directory: {projectFolder}");
                     Directory.CreateDirectory(projectFolder);
 
-
                     PSModuleInfo _PSSCMod = this.MyInvocation.MyCommand.Module;
 
                     // Create a Dictionary to hold the initial config.json values.
                     Dictionary<string, object> _configDict = new Dictionary<string, object>();
-                    Dictionary<string, object> _psscInfo = new Dictionary<string, object>();
-
-                    // Add the PSSimpleConfig module information to the _psscInfo Dictionary
-                    _psscInfo.Add("Version", _PSSCMod.Version.ToString());
-                    _psscInfo.Add("ProjectName", Name);
-                    _psscInfo.Add("ConfigScope", Scope);
+                    Dictionary<string, object> _psscInfo = new Dictionary<string, object>
+                    {
+                        // Add the PSSimpleConfig module information to the _psscInfo Dictionary
+                        { "Version", _PSSCMod.Version.ToString() },
+                        { "ProjectName", Name },
+                        { "ConfigScope", Scope }
+                    };
                     _configDict.Add("PSSC", _psscInfo);
 
                     // Use Get-Module to retrive some basic information about
@@ -111,10 +115,11 @@ public class NewPSSConfig : PSCmdlet
 
                     File.WriteAllText(Path.Combine(projectFolder, "config.json"), configJson.ToString());
                     //WriteObject(_configDict);
+                            PSVariableIntrinsics _sessionState = SessionState.PSVariable;
+                    ps.AddCommand("Set-Variable").AddParameter("Name", "PSSC").AddParameter("Scope", "Script").AddParameter("Value", _configDict);
+                    ps.Invoke();
+                    WriteObject(_configDict);
 
-                    _sessionState.Set("script:PSSimpleConfig", _configDict);
-                    object output = _sessionState.Get("script:PSSimpleConfig");
-                    WriteObject(output);
                 }
             }
         }

@@ -5,7 +5,7 @@ using PSSimpleConfig.Utilities;
 
 namespace PSSimpleConfig.Cmdlets;
 
-[Cmdlet(VerbsCommon.Get, "PSSConfig", DefaultParameterSetName = "List")]
+[Cmdlet(VerbsCommon.Get, "PSSConfigItem", DefaultParameterSetName = "List")]
 public class GetPSSConfig : PSCmdlet
 {
     [Parameter(Mandatory = false, Position = 0, ParameterSetName = "Get")]

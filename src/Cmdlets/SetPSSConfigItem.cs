@@ -3,6 +3,7 @@ using System.Collections;
 using System.Management.Automation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PSSimpleConfig.Utilities;
 
 namespace PSSimpleConfig.Cmdlets;
 
@@ -127,8 +128,8 @@ namespace PSSimpleConfig.Cmdlets;
 ///     </code>
 /// </example>
 /// </summary>
-[Cmdlet(VerbsCommon.Set, "PSSConfig")]
-public class SetPSSConfig : PSCmdlet
+[Cmdlet(VerbsCommon.Set, "PSSConfigItem")]
+public class SetPSSConfigItem : PSCmdlet
 {
     /// <summary>
     /// <para type="description">The name of the project to set the value in.</para>
@@ -147,23 +148,30 @@ public class SetPSSConfig : PSCmdlet
     /// <para type="description">The value to set.</para>
     /// </summary>
     [Parameter(Mandatory = true, Position = 1)]
-    [ValidateNotNullOrEmpty()]
     public object Value { get; set; }
 
     protected override void ProcessRecord()
     {
         string configFilePath = System.IO.Path.Combine(PSSimpleConfig.ProjectRoot, Name, "config.json");
+        _ = new JObject();
+        JObject jObject;
 
-        if (File.Exists(configFilePath))
+        try
         {
-            // Read in the JSON and parse it into a JObject
-            string jsonContent = File.ReadAllText(configFilePath);
-            JObject jObject = JObject.Parse(jsonContent);
+            jObject = PSSimpleConfig.ImportConfig(Name);
+        }
+        catch (Exception e)
+        {
+            throw new InvalidOperationException($"Unable to import configuration file for project: {Name}. Error: {e.Message}");
+        }
+
+        try {
             JToken jToken = jObject.SelectToken(Path);
             if (jToken != null)
             {
                 jToken.Replace(JToken.FromObject(Value));
-                WriteObject(jObject.ToString(Formatting.Indented));
+                PSSimpleConfig.ExportConfig(Name, jObject);
+                WriteObject(JsonConversion.ToPSOutput(jObject));
             }
             else
             {
@@ -175,7 +183,7 @@ public class SetPSSConfig : PSCmdlet
                     string key = keys[i];
 
                     // If the key exists, move down the object tree
-                    if (currentObject.ContainsKey(key))
+                    if (currentObject != null && currentObject.ContainsKey(key))
                     {
                         currentObject = (JObject)currentObject[key];
                     }
@@ -196,13 +204,12 @@ public class SetPSSConfig : PSCmdlet
                         }
                     }
                 }
+                PSSimpleConfig.ExportConfig(Name, currentObject);
+                WriteObject(JsonConversion.ToPSOutput(currentObject));
             }
-            File.WriteAllText(configFilePath, jObject.ToString(Formatting.Indented));
         }
-        else
-        {
-            throw new FileNotFoundException($"The config file for project '{Name}' was not found. Expected file path: {configFilePath}");
+        catch (Exception e) {
+            throw new InvalidOperationException($"Unable to update configuration for project: {Name}. Error: {e.Message}");
         }
-
     }
 }
