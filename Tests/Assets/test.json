@@ -1,0 +1,46 @@
+{
+    "level1": {
+        "simpleValue": "value1",
+        "array": [
+            1,
+            2,
+            3
+        ],
+        "level2": {
+            "simpleValue": "value2",
+            "dictionary": {
+                "key1": "val1",
+                "key2": "val2"
+            },
+            "level3": {
+                "simpleValue": "value3",
+                "arrayOfObjects": [
+                    {
+                        "key1": "val1"
+                    },
+                    {
+                        "key2": "val2"
+                    }
+                ],
+                "level4": {
+                    "simpleValue": "value4",
+                    "boolean": true,
+                    "level5": {
+                        "simpleValue": "value5",
+                        "nullValue": null,
+                        "number": 42
+                    }
+                }
+            }
+        }
+    },
+    "singleValue": "Just a single value",
+    "booleanValue": false,
+    "arrayOfNumbers": [
+        1,
+        2,
+        3,
+        4,
+        5
+    ]
+}
