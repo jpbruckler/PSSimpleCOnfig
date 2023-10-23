@@ -1,10 +1,23 @@
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
 using System.Management.Automation;
 
 namespace PSSimpleConfig.Utilities;
+
+public class PSOutputWrapper
+{
+    public PSObject? PsObject { get; set; }
+    public object[]? Array { get; set; }
+    public object? BasicType { get; set; }
+    public OutputType?Type { get; set; }
+
+    public enum OutputType
+    {
+        PSObject,
+        Array,
+        BasicType
+    }
+}
 
 /// <summary>
 /// Utility class providing methods to convert JSON to PSObjects, Dictionaries,
@@ -19,12 +32,35 @@ namespace PSSimpleConfig.Utilities;
 
 public static class JsonConversion
 {
+    public static PSOutputWrapper ToOutput(JToken token)
+    {
+        PSOutputWrapper output = new PSOutputWrapper();
+        if (token is JObject)
+        {
+            output.PsObject = ToPSObject((JObject)token);
+            output.Type = PSOutputWrapper.OutputType.PSObject;
+            return output;
+        }
+        else if (token is JArray)
+        {
+            output.Array = ToArray((JArray)token);
+            output.Type = PSOutputWrapper.OutputType.Array;
+            return output;
+        }
+        else
+        {
+            output.BasicType = token.ToObject<object>();
+            output.Type = PSOutputWrapper.OutputType.BasicType;
+            return output;
+        }
+    }
+
     /// <summary>
     /// Converts a JObject to a PSObject.
     /// </summary>
     /// <param name="json">Newtonsoft.Json JObject</param>
     /// <returns>System.Management.Automation.PSObject</returns>
-    public static PSObject ToPSObject(this JObject json)
+    public static PSObject ToPSObject(JObject json)
     {
         if (json == null) return null;
 
@@ -68,7 +104,7 @@ public static class JsonConversion
     /// </summary>
     /// <param name="token">Newtonsoft.Json JToken</param>
     /// <returns>System.Object</returns>
-    public static object ToPSOutput(this JToken token)
+    public static object ToPSOutput(JToken token)
     {
         if (token == null) return null;
 

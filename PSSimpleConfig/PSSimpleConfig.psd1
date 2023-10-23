@@ -12,7 +12,7 @@
 RootModule = 'PSSimpleConfig.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.8693.042'
+ModuleVersion = '0.0.8695.048'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -54,7 +54,9 @@ PowerShellVersion = '7.3'
 # RequiredModules = @()
 
 # Assemblies that must be loaded prior to importing this module
-# RequiredAssemblies = @()
+RequiredAssemblies = @(
+    'bin\Newtonsoft.Json.dll'
+)
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
 # ScriptsToProcess = @()
@@ -69,14 +71,10 @@ PowerShellVersion = '7.3'
 NestedModules = @('bin\PSSimpleConfig.dll')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @(
-    'Get-PSSCSessionVariable'
-)
+FunctionsToExport = @()
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @(
-    'New-PSSConfig',
-    'Remove-PSSConfig',
     'Get-PSSConfigitem',
     'Set-PSSConfigitem',
     'Import-PSSConfig'
