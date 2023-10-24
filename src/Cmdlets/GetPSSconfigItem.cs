@@ -1,8 +1,6 @@
 using System.Management.Automation;
-
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
 using PSSimpleConfig.Utilities;
 
 namespace PSSimpleConfig.Cmdlets;
@@ -15,16 +13,29 @@ public class GetPSSConfig : PSCmdlet
     public string? Path { get; set; }
 
     [Parameter(Mandatory = false)]
-    public DirectoryInfo PathOverride { get; set; } = new DirectoryInfo(".");
+    public FileInfo ConfigFile { get; set; }
 
     protected override void ProcessRecord()
     {
-        _ = new PSObject();
+        PSSC instance = PSSC.Instance; // Initialize the singleton instance
+
         JObject jObject;
+        _ = instance.ConfigPath;
+        FileInfo configPath;
+        if (ConfigFile is not null)
+        {
+            // Path was provided.
+            configPath = ConfigFile;
+        }
+        else
+        {
+            // Path was not provided, use the default.
+            configPath = instance.ConfigPath;
+        }
 
         try
         {
-            jObject = PSSC.ImportConfig(PathOverride);
+            jObject = instance.ImportConfig(configPath);
 
             PSOutputWrapper output = JsonConversion.ToOutput(jObject.SelectToken(Path));
             switch (output.Type)
@@ -45,7 +56,7 @@ public class GetPSSConfig : PSCmdlet
         }
         catch (Exception e)
         {
-            throw new InvalidOperationException($"Unable to import configuration file for project: {PathOverride.Name}. Error: {e.Message}");
+            throw new InvalidOperationException($"Unable to import configuration file for project: {ConfigFile.Name}. Error: {e.Message}");
         }
     }
 }

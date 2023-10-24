@@ -1,6 +1,5 @@
 using System.Management.Automation;
 using PSSimpleConfig.Utilities;
-using static PSSimpleConfig.Utilities.PSSC;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -16,19 +15,35 @@ public class SetPSSConfigItem : PSCmdlet
     public object? Value { get; set; }
 
     [Parameter(Mandatory = false)]
-    public DirectoryInfo PathOverride { get; set; } = new DirectoryInfo(".");
+    public FileInfo ConfigFile { get; set; }
 
     [Parameter(Mandatory = false)]
     public SwitchParameter PassThru { get; set; }
     protected override void ProcessRecord()
     {
-        JObject output = new JObject();
+        PSSC instance = PSSC.Instance; // Initialize the singleton instance
+
+        JObject output = new();
         JObject jObject;
+
+        _ = instance.ConfigPath;
+        FileInfo configPath;
+        if (ConfigFile is not null)
+        {
+            // Path was provided.
+            configPath = ConfigFile;
+        }
+        else
+        {
+            // Path was not provided, use the default.
+            configPath = instance.ConfigPath;
+        }
+
         try {
-            jObject = PSSC.ImportConfig(PathOverride);
+            jObject = instance.ImportConfig(configPath);
         }
         catch (Exception e) {
-            throw new InvalidOperationException($"Unable to import configuration file for project: {PathOverride.Name}. Error: {e.Message}");
+            throw new InvalidOperationException($"Unable to import configuration file for project: {configPath.Name}. Error: {e.Message}");
         }
 
         try {
@@ -79,8 +94,8 @@ public class SetPSSConfigItem : PSCmdlet
                 WriteDebug($"Assigning 'currentObject' to 'output'");
                 output = currentObject;
             }
-            WriteVerbose($"Exporting configuration file to {PathOverride.FullName}");
-            ExportConfig(PathOverride, output);
+            WriteVerbose($"Exporting configuration file to {configPath.FullName}");
+            instance.ExportConfig(configPath, output);
             if (PassThru)
             {
                 WriteObject(JsonConvert.SerializeObject(output));

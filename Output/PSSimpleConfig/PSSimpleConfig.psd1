@@ -12,7 +12,7 @@
 RootModule = 'PSSimpleConfig.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.8695.048'
+ModuleVersion = '0.0.8696.008'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -76,6 +76,7 @@ FunctionsToExport = @()
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @(
     'Get-PSSConfigitem',
+    'Get-PSSCModuleInfo',
     'Set-PSSConfigitem',
     'Import-PSSConfig'
 )
