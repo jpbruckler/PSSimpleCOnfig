@@ -1,5 +1,5 @@
 $moduleName = 'PSSimpleConfig'
-$psd1File   = "$PSScriptRoot\$moduleName\$moduleName.psd1"
+$psd1File   = "$PSScriptRoot\src\$moduleName\$moduleName.psd1"
 Push-Location $PSScriptRoot
 
 # Auto increment build number
@@ -36,6 +36,6 @@ $buildData | ConvertTo-Json | Out-File .\build.dat -Force
 $build = & dotnet build $PSScriptRoot\src -o $PSScriptRoot\Output\$moduleName\bin
 if ($build -match 'Build succeeded') {
     (Get-Content $psd1File) -replace "ModuleVersion = '(.*)'", "ModuleVersion = '$newVersion'" | Set-Content $psd1File
-    Copy-Item "$PSScriptRoot\$moduleName\*" "$PSScriptRoot\output\$moduleName" -Recurse -Force
+    Copy-Item "$PSScriptRoot\src\$moduleName\*" "$PSScriptRoot\output\$moduleName" -Recurse -Force
 }
 $build[-5..-1]

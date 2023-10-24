@@ -34,16 +34,16 @@ public static class JsonConversion
 {
     public static PSOutputWrapper ToOutput(JToken token)
     {
-        PSOutputWrapper output = new PSOutputWrapper();
-        if (token is JObject)
+        PSOutputWrapper output = new();
+        if (token is JObject @object)
         {
-            output.PsObject = ToPSObject((JObject)token);
+            output.PsObject = ToPSObject(@object);
             output.Type = PSOutputWrapper.OutputType.PSObject;
             return output;
         }
-        else if (token is JArray)
+        else if (token is JArray array)
         {
-            output.Array = ToArray((JArray)token);
+            output.Array = ToArray(array);
             output.Type = PSOutputWrapper.OutputType.Array;
             return output;
         }

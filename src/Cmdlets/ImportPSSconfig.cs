@@ -1,4 +1,3 @@
-
 using System.IO;
 using System.Management.Automation;
 using Newtonsoft.Json;
@@ -7,52 +6,59 @@ using PSSimpleConfig.Utilities;
 
 namespace PSSimpleConfig.Cmdlets;
 
-[Cmdlet(VerbsData.Import, "PSSConfig", DefaultParameterSetName = "Module")]
+[Cmdlet(VerbsData.Import, "PSSConfig", DefaultParameterSetName = "Path")]
 public class ImportPSSConfig : PSCmdlet
 {
     [Parameter(Mandatory = true, ParameterSetName = "Module")]
-    public string? ModuleName { get; set; }
+    [ValidateNotNullOrEmpty()]
+    public string ModuleName { get; set; }
 
-    [Parameter(Mandatory = true, ParameterSetName = "File")]
-    public FileInfo ConfigFile { get; set; }
+    [Parameter(Mandatory = false, ParameterSetName = "Path")]
+    public string Path { get; set; }
+
+    [Parameter(Mandatory = false)]
+    public SwitchParameter PassThru { get; set; }
     protected override void ProcessRecord()
     {
         PSSC instance = PSSC.Instance; // Initialize the singleton instance
 
-        if (ParameterSetName == "Module" && ModuleName is null)
+        // If a module name is specified, get the ModuleBasePath
+        // If a Path is specified, use that instead
+        if (ParameterSetName == "Module" && ModuleName is not null)
         {
-            throw new PSArgumentNullException(nameof(ModuleName));
-        }
-        else if (ParameterSetName == "File" && ConfigFile is null)
-        {
-            throw new PSArgumentNullException(nameof(ConfigFile));
-        }
-
-        if (ModuleName is not null)
-        {
-            PowerShell ps = PowerShell.Create();
-            ps.AddCommand("Get-Module").AddParameter("Name", ModuleName).AddParameter("ListAvailable");
-            var result = ps.Invoke();
-            if (result.Count == 0)
-            {
-                throw new FileNotFoundException($"Unable to find module {ModuleName}");
+            try {
+                // Try to get the ModuleBasePath for the given module. If it
+                // fails, throw an exception - the user will need to set the
+                // path manually.
+                Path = System.IO.Path.Combine(PSSC.GetModuleBasePath(ModuleName).FullName, "config", "config.json");
             }
-            WriteVerbose($"Initializing configuration for module {ModuleName} with base path {result[0].Properties["ModuleBase"].Value}");
-            instance.Initialize(new DirectoryInfo(result[0].Properties["ModuleBase"].Value.ToString()));
+            catch (Exception e)
+            {
+                throw new IOException($"Unable to get module base path for module: {ModuleName}. Is the module in your PSModulePath? Error: {e.Message}");
+            }
         }
-        else if (ConfigFile is not null)
+        else if (ParameterSetName == "Path" && Path is not null)
         {
-            WriteVerbose($"Initializing configuration for project {ConfigFile.Name}");
-            instance.Initialize(ConfigFile);
+            // If a path is specified, use that instead
+            if (!File.Exists(Path))
+            {
+                throw new FileNotFoundException($"Unable to find config file at path: {Path}");
+            }
+            else
+            {
+                instance.Initialize(new FileInfo(Path));
+            }
         }
-        else
-        {
-            WriteVerbose($"Initializing configuration for project using current directory {Path.Combine(Directory.GetCurrentDirectory(), "config", "config.json")}");
-            instance.Initialize(new DirectoryInfo(Directory.GetCurrentDirectory()));
-        }
-        FileInfo _configPath = instance.ConfigPath;
 
-        WriteVerbose($"Reading configuration from {_configPath.FullName}");
-        WriteObject(JObject.Parse(File.ReadAllText(_configPath.FullName)));
+        // At this point, we should either have thrown an error, or have a valid
+        // config path. Get the config path and read the config file.
+        FileInfo configPath = instance.ConfigPath;
+        WriteVerbose($"Reading configuration from {configPath.FullName}");
+
+        if (PassThru)
+        {
+            WriteObject(JsonConversion.ToOutput(JObject.Parse(File.ReadAllText(configPath.FullName))).PsObject);
+            return;
+        }
     }
 }

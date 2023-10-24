@@ -12,41 +12,32 @@ public class GetPSSConfig : PSCmdlet
     [Parameter(Mandatory = false, Position = 0)]
     public string? Path { get; set; }
 
-    [Parameter(Mandatory = false)]
-    public FileInfo ConfigFile { get; set; }
-
     protected override void ProcessRecord()
     {
         PSSC instance = PSSC.Instance; // Initialize the singleton instance
 
         JObject jObject;
-        _ = instance.ConfigPath;
-        FileInfo configPath;
-        if (ConfigFile is not null)
-        {
-            // Path was provided.
-            configPath = ConfigFile;
-        }
-        else
-        {
-            // Path was not provided, use the default.
-            configPath = instance.ConfigPath;
-        }
 
         try
         {
-            jObject = instance.ImportConfig(configPath);
+            jObject = instance.ImportConfig(instance.ConfigPath);
 
-            PSOutputWrapper output = JsonConversion.ToOutput(jObject.SelectToken(Path));
+            PSOutputWrapper output = Path != null
+                                        ? JsonConversion.ToOutput(jObject.SelectToken(Path))
+                                        : JsonConversion.ToOutput(jObject);
+
             switch (output.Type)
             {
                 case PSOutputWrapper.OutputType.PSObject:
+                    WriteVerbose($"Writing PSObject to pipeline");
                     WriteObject(output.PsObject);
                     break;
                 case PSOutputWrapper.OutputType.Array:
+                    WriteVerbose($"Writing Array to pipeline");
                     WriteObject(output.Array);
                     break;
                 case PSOutputWrapper.OutputType.BasicType:
+                    WriteVerbose($"Writing BasicType to pipeline");
                     WriteObject(output.BasicType);
                     break;
                 default:
@@ -56,7 +47,7 @@ public class GetPSSConfig : PSCmdlet
         }
         catch (Exception e)
         {
-            throw new InvalidOperationException($"Unable to import configuration file for project: {ConfigFile.Name}. Error: {e.Message}");
+            throw new InvalidOperationException($"Unable to process query. Error: {e.Message}");
         }
     }
 }
