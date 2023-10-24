@@ -5,7 +5,7 @@ name: .NET
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "ci-work" ]
   pull_request:
     branches: [ "main" ]
 
@@ -13,6 +13,9 @@ jobs:
   build:
 
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: src
 
     steps:
     - uses: actions/checkout@v4
