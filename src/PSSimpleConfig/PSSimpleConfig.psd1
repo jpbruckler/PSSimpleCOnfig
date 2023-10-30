@@ -28,6 +28,7 @@
         'Get-PSSConfigitem',
         'Get-PSSCModuleInfo',
         'Set-PSSConfigitem',
+        'New-PSSConfig',
         'Import-PSSConfig'
     )
 

@@ -12,6 +12,9 @@ public class GetPSSConfig : PSCmdlet
     [Parameter(Mandatory = false, Position = 0)]
     public string? Path { get; set; }
 
+    [Parameter(Mandatory = false)]
+    public SwitchParameter AsDict { get; set; }
+
     protected override void ProcessRecord()
     {
         PSSC instance = PSSC.Instance; // Initialize the singleton instance
@@ -21,6 +24,11 @@ public class GetPSSConfig : PSCmdlet
         try
         {
             jObject = instance.ImportConfig(instance.ConfigPath);
+
+            if (AsDict == true) {
+                WriteObject(JsonConversion.ConvertToDictionary(jObject));
+                return;
+            }
 
             PSOutputWrapper output = Path != null
                                         ? JsonConversion.ToOutput(jObject.SelectToken(Path))

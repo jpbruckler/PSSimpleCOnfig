@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using System.Management.Automation;
 
 namespace PSSimpleConfig.Utilities;
@@ -9,7 +10,7 @@ public class PSOutputWrapper
     public PSObject? PsObject { get; set; }
     public object[]? Array { get; set; }
     public object? BasicType { get; set; }
-    public OutputType?Type { get; set; }
+    public OutputType? Type { get; set; }
 
     public enum OutputType
     {
@@ -157,4 +158,25 @@ public static class JsonConversion
         }
         return value;
     }
+    public static Dictionary<string, object> ConvertToDictionary(JObject jObject)
+    {
+        var result = new Dictionary<string, object>();
+        foreach (var property in jObject.Properties())
+        {
+            if (property.Value.Type == JTokenType.Object)
+            {
+                result[property.Name] = ConvertToDictionary((JObject)property.Value);
+            }
+            else if (property.Value.Type == JTokenType.Array)
+            {
+                // handle arrays if needed, maybe also recurse into objects within the array
+            }
+            else
+            {
+                result[property.Name] = property.Value.ToObject<object>();
+            }
+        }
+        return result;
+    }
+
 }
